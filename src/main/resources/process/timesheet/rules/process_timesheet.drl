@@ -1,0 +1,25 @@
+package process.timesheet.rules
+ 
+import com.atmecs.ep.model.TimeSheet
+import com.atmecs.ep.model.TimeSheetsSet
+import function com.atmecs.ep.util.Utility.helper
+
+
+rule "process all timesheets"
+	when 
+		timeSheetstemp: TimeSheetsSet(timeSheets:setOfTimeSheets)
+		ts : TimeSheet(payStatus==null) from timeSheets
+		//Boolean(booleanValue == true) from ts.getPayStatus()==null
+	then
+		ts.setPayStatus("PROCESSED");
+		helper(drools);
+	end
+	
+rule "process single sheet"
+	when 
+		timesheet: TimeSheet()
+	then
+		timesheet.setPayStatus("PROCESSED");
+		update(timesheet);
+		helper(drools);
+	end

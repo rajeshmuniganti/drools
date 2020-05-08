@@ -1,0 +1,35 @@
+package add.timesheet.rules
+ 
+import com.atmecs.ep.model.TimeSheet
+import com.atmecs.ep.util.DroolsConstants
+import function com.atmecs.ep.util.Utility.helper
+
+rule "Add timesheet : Overtime burned"
+	when 
+		timesheet: TimeSheet(weeklyHours > 45)
+	then
+		timesheet.setExtraTimeBurned(true);
+		timesheet.setAdditionalHours(timesheet.getWeeklyHours()-45);
+		update(timesheet);
+		helper(drools);
+	end
+
+rule "Add timesheet : Overtime burned and adjust payments"
+	when 
+		timesheet: TimeSheet(extraTimeBurned == true)
+	then
+		timesheet.setPayRatePerDay(DroolsConstants.PAY_RATE_PER_DAY);
+		timesheet.setPayRatePerOT(DroolsConstants.PAY_RATE_PER_OT);
+		timesheet.setAdditionalHours(timesheet.getWeeklyHours()-DroolsConstants.MINIMUM_HOURS_PER_WEEK);
+		timesheet.setTotalPay(DroolsConstants.PAY_PER_WEEK+timesheet.getAdditionalHours()*DroolsConstants.PAY_RATE_PER_OT);
+		helper(drools);
+	end	
+	
+rule "Add timesheet : When Employee dint work extra hours"
+	when 
+		timesheet: TimeSheet(extraTimeBurned == false || weeklyHours <= 45)
+	then
+		timesheet.setPayRatePerDay(DroolsConstants.PAY_RATE_PER_DAY);
+		timesheet.setTotalPay(DroolsConstants.PAY_PER_WEEK);
+		helper(drools);
+	end	
